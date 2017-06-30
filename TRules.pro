@@ -20,15 +20,17 @@ VERSION  = 0.0.1
 
 DEFINES += TRULES_LIBRARY
 
-SOURCES += $$PWD/src/trules.cpp \
-           $$PWD/src/ruleparser.cpp \
-           $$PWD/src/variables.cpp
+SOURCES += \
+  $$PWD/src/trules.cpp \
+  $$PWD/src/ruleparser.cpp \
+  $$PWD/src/variables.cpp
 
-HEADERS += $$PWD/src/trules.h \
-           $$PWD/src/trules_global.h \
-           $$PWD/src/TRules \
-           $$PWD/src/ruleparser.h \
-           $$PWD/src/variables.h
+HEADERS += \
+  $$PWD/src/trules.h \
+  $$PWD/src/trules_global.h \
+  $$PWD/src/TRules \
+  $$PWD/src/ruleparser.h \
+  $$PWD/src/variables.h
 
 DESTDIR = $$PWD/build/lib
 MOC_DIR = $$PWD/build/moc
