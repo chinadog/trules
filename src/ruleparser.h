@@ -27,6 +27,9 @@
 #include <QVector>
 #include <TLogger/TLogger>
 #include "variables.h"
+#include <TDB/structs.h>
+
+
 
 /**
  * @brief Класс Rules
@@ -39,6 +42,7 @@ public:
     // Конструкторы
     Rules();
     Rules(const QString& filePath);
+    int exec(const Event &event, QString* debug = 0);
     int exec(const QString& msg, long long date);
     void setRules(const QString& rules);
 private:

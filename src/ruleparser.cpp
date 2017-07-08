@@ -135,6 +135,93 @@ void Rules::setRules(const QString &rules)
     }
 }
 
+int Rules::exec(const Event &event, QString *debug)
+{
+    qWarning() << "start exec";
+    int result = -1;
+    Variables vars;
+    vars.set("msg",event.msg);
+    vars.set("date",QString::number(event.time.toMSecsSinceEpoch()));
+
+    for(int i=0;i<m_records.size();i++) // Пробегаем по всем правилам
+    {
+        int ruleResult = -1;
+        for(int j=0;j<m_records[i].actions.size();j++) // Пробегаем по всем лексемам в правиле
+        {
+            Action action = m_records[i].actions[j];
+            QString cmd = action.cmd;
+//            int recordTokensSize = action.tokens.size();
+            if(cmd == "find")
+            {
+                bool ret = find( action.tokens[0],
+                                 action.tokens[1], &vars );
+                if(ret == 0)
+                {
+                    ruleResult = -1;
+                    break;
+                }
+                ruleResult = i;
+            }
+            else if(cmd == "regexp")
+            {
+                bool ret = regexp( action.tokens[0],
+                                   action.tokens[1],
+                                   action.tokens[2].toInt(),
+                                   action.tokens[3].toInt(),
+                                   action.tokens[4], &vars );
+                if(ret == 0)
+                {
+                    ruleResult = -1;
+                    break;
+                }
+                ruleResult = i;
+            }
+            else if(action.cmd == "set")
+            {
+                set( action.tokens[0],
+                     action.tokens[1], &vars );
+                ruleResult = i;
+            }
+            else if(action.cmd == "concat")
+            {
+                QString varName = action.tokens[0];
+                QString str1 = getValue(action.tokens[1], &vars);
+                for(int k=2;k<action.tokens.size();k++)
+                {
+                    QString str2 = getValue(action.tokens[k], &vars);
+                    concat( varName, str1, str2, &vars);
+                    str1 = str1+str2;
+                }
+                TINFO() << "Concat result = " << str1;
+            }
+            else if(action.cmd == "eventlog")
+            {
+                TWARNING() << "eventlog: " << vars.get( action.tokens[0] );
+                eventlog( action.tokens[0] );
+                ruleResult = i;
+//                j=j+1;
+            }
+            else if(action.cmd == "debug")
+            {
+                TWARNING() << "debug: " << vars.get( action.tokens[0] );
+                if(debug != 0)
+                {
+                    *debug =  vars.get( action.tokens[0] );
+                }
+                TINFO() << "debug: " << *debug ;
+                ruleResult = i;
+//                j=j+1;
+            }
+        }
+        if(ruleResult > 0)
+        {
+            result = ruleResult;
+            break;
+        }
+    }
+    return result;
+}
+
 int Rules::exec(const QString &msg, long long date)
 {
     int result = -1;
@@ -218,9 +305,9 @@ bool Rules::concat(const QString &varName, const QString &str1, const QString &s
     return true;
 }
 
-bool Rules::eventlog(const QString &logMsg)
+bool Rules::eventlog(const QString &/*logMsg*/)
 {
-    TDEBUG() << logMsg;
+//    TDEBUG() << logMsg;
     return true;
 }
 
@@ -269,8 +356,6 @@ bool Rules::set(const QString &varName, const QString &value, Variables* vars)
     vars->set(varName, value);
     return true;
 }
-
-
 
 
 
