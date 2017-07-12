@@ -137,7 +137,7 @@ void Rules::setRules(const QString &rules)
 
 int Rules::exec(const Event &event, QString *debug)
 {
-    qWarning() << "start exec";
+    TDEBUG() << "start exec";
     int result = -1;
     Variables vars;
     vars.set("msg",event.msg);
@@ -145,9 +145,11 @@ int Rules::exec(const Event &event, QString *debug)
 
     for(int i=0;i<m_records.size();i++) // Пробегаем по всем правилам
     {
+        TDEBUG() << "  exec rule:\n" << m_records[i];
         int ruleResult = -1;
         for(int j=0;j<m_records[i].actions.size();j++) // Пробегаем по всем лексемам в правиле
         {
+            TDEBUG() << "    exec lecsem: " << m_records[i].actions[j].cmd;
             Action action = m_records[i].actions[j];
             QString cmd = action.cmd;
 //            int recordTokensSize = action.tokens.size();
@@ -160,7 +162,7 @@ int Rules::exec(const Event &event, QString *debug)
                     ruleResult = -1;
                     break;
                 }
-                ruleResult = i;
+                ruleResult = 1;
             }
             else if(cmd == "regexp")
             {
@@ -174,13 +176,13 @@ int Rules::exec(const Event &event, QString *debug)
                     ruleResult = -1;
                     break;
                 }
-                ruleResult = i;
+                ruleResult = 1;
             }
             else if(action.cmd == "set")
             {
                 set( action.tokens[0],
                      action.tokens[1], &vars );
-                ruleResult = i;
+                ruleResult = 1;
             }
             else if(action.cmd == "concat")
             {
@@ -192,13 +194,14 @@ int Rules::exec(const Event &event, QString *debug)
                     concat( varName, str1, str2, &vars);
                     str1 = str1+str2;
                 }
+                ruleResult = 1;
                 TINFO() << "Concat result = " << str1;
             }
             else if(action.cmd == "eventlog")
             {
                 TWARNING() << "eventlog: " << vars.get( action.tokens[0] );
                 eventlog( action.tokens[0] );
-                ruleResult = i;
+                ruleResult = 1;
 //                j=j+1;
             }
             else if(action.cmd == "debug")
@@ -206,19 +209,26 @@ int Rules::exec(const Event &event, QString *debug)
                 TWARNING() << "debug: " << vars.get( action.tokens[0] );
                 if(debug != 0)
                 {
-                    *debug =  vars.get( action.tokens[0] );
+                    *debug +=  vars.get( action.tokens[0] ) + "\n";
                 }
-                TINFO() << "debug: " << *debug ;
-                ruleResult = i;
+                ruleResult = 1;
 //                j=j+1;
+            }
+            else if(action.cmd == "continue")
+            {
+                ruleResult = -1;
             }
         }
         if(ruleResult > 0)
         {
+            TDEBUG() << "rule result > 0";
             result = ruleResult;
             break;
         }
     }
+    qWarning() << *debug;
+    debug->remove(debug->size()-1,1);
+    qWarning() << *debug;
     return result;
 }
 
